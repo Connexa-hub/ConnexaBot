@@ -63,12 +63,12 @@ jobs:
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
           echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
 
-      # 📝 Update app.json version
-      - name: Update app.json version
+      # 📝 Patch app.config.js with new version info
+      - name: Update app.config.js version
         run: |
-          jq ".expo.version = \"${APP_VERSION}\" | .expo.android.versionCode = ${VERSION_CODE}" app.json > app.tmp.json
-          mv app.tmp.json app.json
-          cat app.json
+          sed -i "s/version:.*/version: '${APP_VERSION}',/" app.config.js
+          sed -i "s/versionCode:.*/versionCode: ${VERSION_CODE},/" app.config.js
+          cat app.config.js
 
       # 🚀 Build APK in Expo Cloud
       - name: Build Production APK with EAS
@@ -103,6 +103,7 @@ jobs:
             - Early testing version
             - Built via Expo EAS
             - Includes new bot features
+            - Download APK below 👇
           draft: false
           prerelease: true
           files: dist/ConnexaBotApp-${{ env.NEXT_TAG }}.apk
