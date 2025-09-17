@@ -63,12 +63,12 @@ jobs:
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
           echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
 
-      # 📝 Patch app.config.js with new version info
-      - name: Update app.config.js version
+      # 📝 Update app.json version
+      - name: Update app.json version
         run: |
-          sed -i "s/version:.*/version: '${APP_VERSION}',/" app.config.js
-          sed -i "s/versionCode:.*/versionCode: ${VERSION_CODE},/" app.config.js
-          cat app.config.js
+          jq ".expo.version = \"${APP_VERSION}\" | .expo.android.versionCode = ${VERSION_CODE}" app.json > app.tmp.json
+          mv app.tmp.json app.json
+          cat app.json
 
       # 🚀 Build APK in Expo Cloud
       - name: Build Production APK with EAS
@@ -76,37 +76,35 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          BUILD_URL=$(eas build --platform android --profile production-apk --non-interactive --wait --json --token $EXPO_TOKEN | jq -r '.[0].artifacts.buildUrl')
+          BUILD_URL=$(eas build --platform android --profile production-apk --non-interactive --wait --json --token $EXPO_TOKEN | jq -r '.artifacts.buildUrl')
           echo "BUILD_URL=$BUILD_URL" >> $GITHUB_ENV
 
       # ⬇️ Download built APK and rename with version
       - name: Download APK from Expo
         run: |
           mkdir -p dist
-          curl -L -o dist/ConnexaBot-${{ env.NEXT_TAG }}.apk ${{ env.BUILD_URL }}
+          curl -L -o dist/ConnexaBotApp-${{ env.NEXT_TAG }}.apk ${{ env.BUILD_URL }}
 
       # 📦 Upload APK as GitHub Actions Artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: connexa-bot-apk
-          path: dist/ConnexaBot-${{ env.NEXT_TAG }}.apk
+          name: connexa-apk
+          path: dist/ConnexaBotApp-${{ env.NEXT_TAG }}.apk
 
       # 🚀 Create GitHub Release & attach APK
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.NEXT_TAG }}
-          name: "ConnexaBot Beta Release ${{ env.NEXT_TAG }}"
+          name: "ConnexaBotApp Beta Release ${{ env.NEXT_TAG }}"
           body: |
-            ConnexaBot Beta Release ${{ env.NEXT_TAG }}
-            - WhatsApp bot for groups, channels & community management
-            - AI-powered auto-replies & scheduling
-            - Upload media from gallery, GitHub, and more
-            - Built with Expo & Node.js
-            - License: All Rights Reserved (© 2025 Connexa)
+            ConnexaBotApp Beta Release ${{ env.NEXT_TAG }}
+            - Early testing version
+            - Built via Expo EAS
+            - Includes new bot features
           draft: false
           prerelease: true
-          files: dist/ConnexaBot-${{ env.NEXT_TAG }}.apk
+          files: dist/ConnexaBotApp-${{ env.NEXT_TAG }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
