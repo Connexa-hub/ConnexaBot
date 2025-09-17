@@ -1,9 +1,9 @@
-name: EAS Build APK (Beta)
+name: EAS Build APK (Beta Release)
 
 on:
   push:
     tags:
-      - "v*.*.*-beta"   # example: v1.0.0-beta
+      - "v*.*.*-beta"   # Matches v1.0.0-beta, v2.3.1-beta, etc.
 
 jobs:
   build:
@@ -27,8 +27,15 @@ jobs:
       - name: Build APK with Expo Cloud
         run: eas build --platform android --profile preview --non-interactive --token ${{ secrets.EXPO_TOKEN }}
 
-      - name: Upload build details
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: eas-build-output
           path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
