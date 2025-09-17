@@ -3,7 +3,7 @@ name: EAS Build APK (Beta)
 on:
   push:
     tags:
-      - "v*.*.*-beta"   # e.g. v1.0.0-beta
+      - "v*.*.*-beta"   # example: v1.0.0-beta
 
 jobs:
   build:
@@ -21,18 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Set up Expo
+      - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Authenticate with Expo
-        run: eas whoami || eas build:configure --token=${{ secrets.EXPO_TOKEN }}
+      - name: Build APK with Expo Cloud
+        run: eas build --platform android --profile preview --non-interactive --token ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build APK
-        run: eas build --platform android --profile preview --non-interactive --local
-
-      - name: Upload APK to GitHub Releases
-        uses: softprops/action-gh-release@v1
+      - name: Upload build details
+        uses: actions/upload-artifact@v4
         with:
-          files: build-*/outputs/apk/release/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: eas-build-output
+          path: dist/
